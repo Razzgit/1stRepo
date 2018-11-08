@@ -1,6 +1,6 @@
 #!/bin/sh
 echo "first scrit"
 date
-echo " "
+echo "my rules my wish "
 echo " "
 df -h
