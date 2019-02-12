@@ -5,5 +5,5 @@ sudo netstat -uplnt
 
 echo ""
 echo ""
-sudo echo "Welocme to Raj's WorkPlace and TESSTING WEBHOOKS ON SLAVE NODES" > /var/www/html/index.html
+sudo echo "123456789" > /var/www/html/index.html
 sudo service apache2 restart
