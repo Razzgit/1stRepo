@@ -1,0 +1,316 @@
+https://github.com/selenium-saikrishna/maven.git
+https://github.com/selenium-saikrishna/FunctionalTesting.git
+
+YAML - Scripting
+key-value represantaion
+ 
+my_key: 25
+key with space:25
+my_string: 'yaml scripting"
+my_string: yaml scripting
+my float: 25.0
+my boolean: true
+null value: null
+
+
+sequence represantaion:
+-----------------------
+
+cricket_players:
+ - yuvi
+ - dhoni
+ - raina
+ 
+ which is equal to cricket_players = ['yuvi','dhoni','raina'] in python
+
+ Map represantaion:
+------------------
+cricket_players:
+ - yuvi: 45
+ - dhoni: 40
+ - sourub:
+		- capitan
+		- age:50
+ - raina: 35
+ 
+Sequences are ordered collaectios.
+Maps are unordered collaectios.
+
+moules in ANSIBLE:-
+-----------------
+command--> it's for executing basic Linux commands. it is a default module.
+shell--> it's for executing shall scripts or commnads which involve redirections and piping
+ping --> To check connectity b/w master and nodes.
+apt --> it's for package management for ubuntu machines.
+yum --> it's for package management for RH cent fedor...
+copy --> it for copying file from master to nodes.
+fetch --> it is for copying files from nodes to master.
+file --> this is used for creating files and directories on nodes and alos for changes permissions 
+git --> this is for performing version controlling using git on nodes.
+debug --> disply o/p of any module.
+user --> it is for creating users assiging psswds home directories etc on nodes.
+stat --> use to capture info about files and directiories on nodes.
+docker --> for running docker containers on manged nodes.
+ec2 --> it is for creating ec2 instances.
+
+Ansible ad-hoc commands:
+-----------------------
+ansible all/group/ipaddress -i /etc/ansible/hostes -m modulename -a '  ' {-i required when using coustem inventry}
+ansible all/group/ipaddress -m modulename -a ' '
+ansible all -m command -a 'ls -la'
+ansible all -a 'ls -la'   {command module is a default so no needed }
+
+ansible all -m shell -a 'ls -la > file1'   (for redirections and pipling SHELL needed)
+ansible all -m shell -a 'head -15 /etc/passwd | tail -10'
+ansible all -m copy -a 'src=file1 dest=file2' 
+ansible all -m copy -a 'src=dirname dest=/etc/dir2  (by using copy we can copy Dir's too)
+ansible all -m copy -a 'src=file1 dest=file2 owner=root group=ubuntu mode=777' -b 
+ansible all -m copy -a 'dest=file1 content='someting/n' (add content )
+
+copy can be used to copy file from oneloaction other location in same noade. by below command
+
+ansible all -m copy -a 'src=file1 dest=/etc/file1 remote_src=yes' -b
+{-b --> sudo.}
+copy file from node to master-
+ansible nodeip -m fetch -a 'src=file_path dest=dest_path' 
+
+apt-
+---
+present = install
+absent  = unistall
+latest  = upgrade
+
+ansible all -m apt -a 'name=tree state=present' -b
+ansible all -m apt -a 'name=apache2 state=present update_cache=yes' -b
+{update_cache=yes  will_do_the apt-get update}
+ansible all -m copy -a 'dest=/etc/www/html/index.html content="hello Raj!!"' -b/
+
+service -
+-------
+ansible all -m service -a 'name=apache2 state=restarted' -b 
+
+state = stop to stop service
+state = started to start service 
+state = restarted to restart service.
+
+
+
+ansible-doc copy 
+
+
+date > file1
+(data;cal) 2> file1 (2>  will redirect only error to file. if o/p genuien will disply in screen)
+(data;cal) &> file 1 (&> will move both error and result)
+
+
+How write ansible PlayBook------->
+
+python -c 'import crypt,getpass; print crypt.crypt(getpass.getpass())'  --> it will gives u encryted passwd
+
+openssl passwd -l -salt $(openssl rand -base64 6) 99009900 --> it will gives u encryted passwd {ex- $1$J60pps7O$9mm7zhTP5ODqEz7oKdv2L/}
+
+---
+ - name: creating users, files and writing date init.
+   become: yes
+   hosts: raj
+   vars:
+    my_con: $1$J60pps7O$9mm7zhTP5ODqEz7oKdv2L/
+   tasks:
+    - name: creating users
+      user:
+       name: saladi
+       password: '{{my_con}}'
+       home: /home/saladi/
+       shell: /bin/bash
+	  tags: creating_user 
+    - name: create file..
+      file:
+       name: /home/saladi/filenew
+       state: touch
+    - name: add content..
+      copy:
+       dest: /home/saladi/filenew
+       content: "hello raj\n"
+	  tags: add_content 
+	 
+ubuntu@ip-172-31-23-215:~$ ansible-playbook test.yml --list-tags
+playbook: test.yml
+
+  play #1 (raj): creating users, files and writing date init.   TAGS: []
+      TASK TAGS: [add_content, creating_user]
+	  
+ansible-playbook test.yml -t add_content,add_content	  
+
+*****************************************************************\
+---
+ - hosts: raj
+   become: yes
+   tasks:
+   - name: install apache2
+     apt:
+      name: apache2
+      state: present
+   - name: editing index.html
+     copy:
+      dest: /var/www/index/index.html
+      content: "Hello Rajkumar"
+   - name: starting services
+     service:
+      name: apache2
+      state: restarted 
+   - name: check the site availabilty
+     uri:
+      url: http:ipaddress
+      status: 200
+	
+...
+
+*****************************************************************
+---  
+#play1
+
+ - hosts: raj
+   tasks:
+   - copy: src=/home/ubuntu/hello.txt dest=/tmp/
+   - command: date > /home/ubuntu/new.txt
+	
+#play2
+
+ - hosts: raj
+   tasks:
+    - copy: src=/home/ubuntu/hi.txt dest=/tmp/
+*************************************************************************************	
+Variables in YAML.....(ex- create a file in client machine)
+
+
+ 
+******************************************************************************************     
+ varaibles:
+ ----------
+ 1. Global scope
+ 2. Play scope
+ 3. Host Scope
+ 
+ Global scope: these variables are always passwd from the command prompt and they have the highest priority
+               the are passed using "extra-vars
+			   
+ Host scope: These are 2 types
+ 1. variables taht work on single hostes
+ 2.variables that work on a group of hosts 
+ host scope variables have the next level of priority after global scope variables
+ These are designed to work on a host or a group of hosts.
+ 
+ Play scope: These variables are created in the individual plays and they can effect only that play
+             They have the least priority
+
+			 
+***********************************************
+global scope variables
+---
+ - name: using global scope variables
+   hosts: raj
+   tasks:
+   - name: install some s/w
+     apt:
+	  name: '{{a}}'
+	  state: '{{b}}'
+	  update_cache: '{{c}}'
+...
+
+ansible-playbook varia.yml --extra-vars 'a=tree b=present c=yes' -b
+
+*************************************************
+2.play scope:
+------------
+syntax:
+vars:
+ var1: "someting"
+ var2: "someting"
+ 
+---
+ - hosts: raj
+   vars:
+    my_content: "This file created by var concept"
+   tasks:
+    - copy:
+       dest: /tmp/myfile.txt
+ 	   content: "{{my_content}}"
+	   
+ansible-playbook xx.yml --extra-vars 'my_content=this will get first priorty then play var'
+
+note-  we can bypass global scope variables by ignoreing playscope vars.
+********************************************************
+3. host scope variables-
+------------------------
+/etc/ansible/hostes
+[raj]
+ipadress
+ipadress
+
+[second gropu]
+ipadress
+ipadress 
+
+1.variables taht work on single hostes
+These variables should be defined in a folder called 'gropu_vars', 
+and this folder should be created in the same location where the all playbooks created.
+and the file name should be with host group name.
+
+----------------------------------------
+vi /home/ubuntu/playbooks/group_vars/raj
+a: file99
+b: touch
+--------------------------------
+---
+------------------------------
+ - hosts: raj
+   tasks:
+   - file:
+      name: '{{a}}'
+      state: '{{b}}'
+------------------------------
+
+
+
+
+
+
+
+
+
+ 
+ 
+ 
+	
+	
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+ 
+ 
